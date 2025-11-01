@@ -1,8 +1,4 @@
---[[
-    Copyright (c) 2025 imhenne187
-    Open Sourced
-    made by Henne
-]]
+
 
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
