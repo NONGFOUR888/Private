@@ -1,0 +1,574 @@
+local VirtualUser = game:GetService("VirtualUser")
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local muscleEvent = Player:WaitForChild("muscleEvent")
+local display = Player.DisplayName
+
+
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/C4EGOIST/Private/refs/heads/main/NongFour", true))()
+
+local window = library:AddWindow("เสี่ยบ่าวสั่งลุย |ส่วนตัว - หวัดดีคร้าบ "..display, {
+main_color = Color3.fromRGB(255, 153, 255),
+min_size = Vector2.new(650, 700),
+can_resize = false,
+})
+
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local blockedFrames = {"strengthFrame", "durabilityFrame", "agilityFrame"}
+
+for _, name in ipairs(blockedFrames) do
+    local frame = replicatedStorage:FindFirstChild(name)
+    if frame and frame:IsA("GuiObject") then frame.Visible = false end
+end
+
+replicatedStorage.ChildAdded:Connect(function(child)
+    if table.find(blockedFrames, child.Name) and child:IsA("GuiObject") then
+        child.Visible = false
+    end
+end)
+
+local features = window:AddTab("การเกิดใหม่")
+features:Show()
+
+features:AddLabel("ฟามรี").TextSize = 22
+
+local player = game.Players.LocalPlayer
+local muscleEvent = player:WaitForChild("muscleEvent")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+
+local function unequipPets()
+    for _, folder in pairs(player.petsFolder:GetChildren()) do
+        if folder:IsA("Folder") then
+            for _, pet in pairs(folder:GetChildren()) do
+                replicatedStorage.rEvents.equipPetEvent:FireServer("unequipPet",
+                                                                   pet)
+            end
+        end
+    end
+    task.wait(0.1)
+end
+
+local function equipPetsByName(name)
+    unequipPets()
+    task.wait(0.01)
+    for _, pet in pairs(player.petsFolder.Unique:GetChildren()) do
+        if pet.Name == name then
+            replicatedStorage.rEvents.equipPetEvent:FireServer("equipPet", pet)
+        end
+    end
+end
+
+local isRunning = false
+
+local function fastReb()
+    while isRunning do
+        equipPetsByName("Swift Samurai")
+        task.wait(0.4) -- Kurze Pause zwischen Pet-Wechsel
+
+        local rebirths = player.leaderstats.Rebirths.Value
+        local strengthTarget = 5000 + (rebirths * 2600)
+
+        while isRunning and player.leaderstats.Strength.Value < strengthTarget do
+            local repsToDo = player.MembershipType ==
+                                 Enum.MembershipType.Premium and 8 or 14
+            for _ = 1, repsToDo do muscleEvent:FireServer("rep") end
+            task.wait(0.02) -- kurze Pause, um die Serverlast nicht zu überlasten
+        end
+
+        if player.leaderstats.Strength.Value >= strengthTarget then
+            -- Sobald die Zielstärke erreicht ist, Pet wechseln
+            equipPetsByName("Tribal Overlord")
+            task.wait(0.4)
+
+            local before = player.leaderstats.Rebirths.Value
+            repeat
+                replicatedStorage.rEvents.rebirthRemote:InvokeServer(
+                    "rebirthRequest")
+                task.wait(0.3)
+            until player.leaderstats.Rebirths.Value > before
+
+            task.wait(0.5)
+        end
+    end
+end
+
+local switch = features:AddSwitch("เริ่มรีไว", function(bool)
+    if bool then
+        isRunning = true
+        fastReb()
+    else
+        isRunning = false
+    end
+end)
+
+features:AddLabel("--- ห้ามใช้จอดำตอนรี ---").TextSize = 17
+
+features:AddLabel("สัตว์").TextSize = 22
+
+features:AddButton("ใส่ตัวซามูไร", function()
+    unequipPets()
+    equipPetsByName("Swift Samurai")
+end)
+
+features:AddButton("ใส่ตัวหน้ากากชนเผ่า", function()
+    unequipPets()
+    equipPetsByName("Tribal Overlord")
+end)
+
+local features = window:AddTab("ฟามไว")
+features:Show()
+
+features:AddLabel("ฟามกล้าม").TextSize = 22
+
+local player = game.Players.LocalPlayer
+local muscleEvent = player:WaitForChild("muscleEvent")
+local runFastRep = false
+local repsPerTick = 1
+
+local function getPing()
+    local stats = game:GetService("Stats")
+    local pingStat = stats:FindFirstChild("PerformanceStats") and
+                         stats.PerformanceStats:FindFirstChild("Ping")
+    return pingStat and pingStat:GetValue() or 0
+end
+
+features:AddTextBox("ปรับความเร็วการฟาม", function(value)
+    local num = tonumber(value)
+    if num and num > 0 then repsPerTick = math.floor(num) end
+end, {placeholder = "1"})
+
+local function fastRepLoop()
+    while runFastRep do
+        local startTime = tick()
+        while tick() - startTime < 1 and runFastRep do
+            for i = 1, repsPerTick do muscleEvent:FireServer("rep") end
+            task.wait(0.02)
+        end
+
+        while runFastRep and getPing() >= 100 do task.wait(1) end
+    end
+end
+
+features:AddSwitch("เริ่มการฟามไว", function(state)
+    runFastRep = state
+    if runFastRep then
+        task.spawn(fastRepLoop)
+    else
+        print("")
+    end
+end)
+
+features:AddLabel("เพิ่มเติม").TextSize = 22
+
+local function activateProteinEgg()
+    local tool = player.Character:FindFirstChild("Protein Egg") or
+                     player.Backpack:FindFirstChild("Protein Egg")
+    if tool then muscleEvent:FireServer("proteinEgg", tool) end
+end
+
+local running = false
+
+task.spawn(function()
+    while true do
+        if running then
+            activateProteinEgg()
+            task.wait(1800)
+        else
+            task.wait(1)
+        end
+    end
+end)
+
+local switch = features:AddSwitch("กินไข่ทุกๆ30นาที", function(state)
+    running = state
+    if state then activateProteinEgg() end
+end)
+switch:Set(false)
+
+features:AddButton("จอดำ", function()
+    local player = game.Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    local lighting = game:GetService("Lighting")
+
+    for _, gui in pairs(playerGui:GetChildren()) do
+        if gui:IsA("ScreenGui") then gui:Destroy() end
+    end
+
+    local function removeTransparentParts(obj)
+        for _, part in pairs(obj:GetDescendants()) do
+            if part:IsA("BasePart") and part.Transparency >= 0.5 then
+                part:Destroy()
+            end
+        end
+    end
+
+    local function removeSounds(obj)
+        for _, s in pairs(obj:GetDescendants()) do
+            if s:IsA("Sound") then
+                s:Stop()
+                s:Destroy()
+            end
+        end
+    end
+
+    local function hideOtherPlayers()
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p ~= player and p.Character then p.Character:Destroy() end
+        end
+    end
+
+    local function removeNPCs()
+        for _, npc in pairs(workspace:GetChildren()) do
+            if npc:IsA("Model") and npc:FindFirstChildOfClass("Humanoid") and
+                not game.Players:GetPlayerFromCharacter(npc) then
+                npc:Destroy()
+            end
+        end
+    end
+
+    local function darkenSky()
+        for _, v in pairs(lighting:GetChildren()) do
+            if v:IsA("Sky") then v:Destroy() end
+        end
+
+        local darkSky = Instance.new("Sky")
+        darkSky.Name = "DarkSky"
+        darkSky.SkyboxBk = "rbxassetid://0"
+        darkSky.SkyboxDn = "rbxassetid://0"
+        darkSky.SkyboxFt = "rbxassetid://0"
+        darkSky.SkyboxLf = "rbxassetid://0"
+        darkSky.SkyboxRt = "rbxassetid://0"
+        darkSky.SkyboxUp = "rbxassetid://0"
+        darkSky.Parent = lighting
+
+        lighting.Brightness = 0
+        lighting.ClockTime = 0
+        lighting.TimeOfDay = "00:00:00"
+        lighting.OutdoorAmbient = Color3.new(0, 0, 0)
+        lighting.Ambient = Color3.new(0, 0, 0)
+        lighting.FogColor = Color3.new(0, 0, 0)
+        lighting.FogEnd = 100
+
+        task.spawn(function()
+            while true do
+                wait(5)
+                if not lighting:FindFirstChild("DarkSky") then
+                    darkSky:Clone().Parent = lighting
+                end
+                lighting.Brightness = 0
+                lighting.ClockTime = 0
+                lighting.OutdoorAmbient = Color3.new(0, 0, 0)
+                lighting.Ambient = Color3.new(0, 0, 0)
+                lighting.FogColor = Color3.new(0, 0, 0)
+                lighting.FogEnd = 100
+            end
+        end)
+    end
+
+    local function removeParticleEffects()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") then obj:Destroy() end
+        end
+    end
+
+    local function removeLightSources()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("PointLight") or obj:IsA("SpotLight") or
+                obj:IsA("SurfaceLight") then obj:Destroy() end
+        end
+    end
+
+    removeParticleEffects()
+    removeLightSources()
+    darkenSky()
+end)
+
+features:AddLabel("สัตว์").TextSize = 22
+
+features:AddButton("ใส่ตัวซามูไร", function()
+    unequipPets()
+    equipPetsByName("Swift Samurai")
+end)
+
+features:AddButton("ใส่ตัวหน้ากากชนเผ่า", function()
+    unequipPets()
+    equipPetsByName("Tribal Overlord")
+end)
+
+local features = window:AddTab("ฟาม")
+features:Show()
+
+features:AddLabel("เพิ่มเติม").TextSize = 22
+
+local switch = features:AddSwitch("ฟรีเกมพาสยกอัตโนมัติ",
+                                  function(bool)
+    local player = game:GetService("Players").LocalPlayer
+    if player:FindFirstChild("autoLiftEnabled") then
+        player.autoLiftEnabled.Value = bool
+    end
+end)
+switch:Set(false)
+
+features:AddLabel("Machines").TextSize = 22
+
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+features:AddButton("Jungle Lift", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-8642.396484375, 6.7980651855, 2086.1030273)
+    task.wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
+features:AddButton("Jungle Squat", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-8371.43359375, 6.79806327, 2858.88525390)
+    task.wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
+features:AddButton("King Lift", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-8769.083, 17.2190, -5665.84228)
+    task.wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
+features:AddButton("King Squat", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-8762.1689, 17.2190, -6044.04980)
+    task.wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
+features:AddButton("Legends Lift", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(4528.474609375, 989.0000629425, -4001.05151367)
+    task.wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
+features:AddButton("Legends Squat", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(4431.306152, 991.5455322, -4051.4296)
+    task.wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
+features:AddButton("Legends Pull Up", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(4298.6323, 991.54040, -4119.97363)
+    task.wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
+local features = window:AddTab("วาป")
+features:Show()
+
+features:AddLabel("Main").TextSize = 22
+
+features:AddButton("Tiny Island", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-37.1, 9.2, 1919)
+end)
+
+features:AddButton("Main Island", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(16.07, 9.08, 133.8)
+end)
+
+features:AddButton("Beach", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-8, 9, -169.2)
+end)
+
+features:AddLabel("Gyms").TextSize = 22
+
+features:AddButton("Muscle King Gym", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-8665.4, 17.21, -5792.9)
+end)
+
+features:AddButton("Jungle Gym", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-8543, 6.8, 2400)
+end)
+
+features:AddButton("Legends Gym", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(4516, 991.5, -3856)
+end)
+
+features:AddButton("Infernal Gym", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-6759, 7.36, -1284)
+end)
+
+features:AddButton("Mythical Gym", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(2250, 7.37, 1073.2)
+end)
+
+features:AddButton("Frost Gym", function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-2623, 7.36, -409)
+end)
+
+local features = window:AddTab("ค่าพลัง")
+features:Show()
+
+local player = game.Players.LocalPlayer
+local leaderstats = player:WaitForChild("leaderstats")
+local strengthStat = leaderstats:WaitForChild("Strength")
+local rebirthsStat = leaderstats:WaitForChild("Rebirths")
+local durabilityStat = player:WaitForChild("Durability")
+
+local function formatNumber(number)
+    local numStr = tostring(number)
+    local formattedStr = numStr:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+    if formattedStr:sub(1, 1) == "," then formattedStr = formattedStr:sub(2) end
+    return formattedStr
+end
+
+local timeLabel = features:AddLabel("⏱️Time:")
+timeLabel.TextSize = 24
+timeLabel.Font = Enum.Font.PatrickHand
+
+local stopwatchLabel = features:AddLabel("0d 0h 0m 0s")
+stopwatchLabel.TextSize = 20
+stopwatchLabel.Font = Enum.Font.PatrickHand
+
+features:AddLabel("").TextSize = 10
+
+local statsLabel = features:AddLabel("📊Stats:")
+statsLabel.TextSize = 24
+statsLabel.Font = Enum.Font.PatrickHand
+
+local strengthLabel = features:AddLabel("Strength: 0")
+local durabilityLabel = features:AddLabel("Durability: 0")
+local rebirthsLabel = features:AddLabel("Rebirths: 0")
+
+strengthLabel.TextSize = 20
+strengthLabel.Font = Enum.Font.PatrickHand
+durabilityLabel.TextSize = 20
+durabilityLabel.Font = Enum.Font.PatrickHand
+rebirthsLabel.TextSize = 20
+rebirthsLabel.Font = Enum.Font.PatrickHand
+
+local sessionStrength = strengthStat.Value
+local sessionDurability = durabilityStat.Value
+local sessionRebirths = rebirthsStat.Value
+
+features:AddLabel("").TextSize = 10
+
+local sessionLabel = features:AddLabel("🕹️Session:")
+sessionLabel.TextSize = 24
+sessionLabel.Font = Enum.Font.PatrickHand
+
+local sessionStrengthLabel = features:AddLabel("Gained Strength: 0")
+local sessionDurabilityLabel = features:AddLabel("Gained Durability: 0")
+local sessionRebirthsLabel = features:AddLabel("Gained Rebirths: 0")
+
+sessionStrengthLabel.TextSize = 20
+sessionStrengthLabel.Font = Enum.Font.PatrickHand
+sessionDurabilityLabel.TextSize = 20
+sessionDurabilityLabel.Font = Enum.Font.PatrickHand
+sessionRebirthsLabel.TextSize = 20
+sessionRebirthsLabel.Font = Enum.Font.PatrickHand
+
+local startTime = tick()
+
+-- Wir setzen die Session-Stats beim ersten Laden und ändern sie nie mehr.
+local initialStrength = strengthStat.Value
+local initialDurability = durabilityStat.Value
+local initialRebirths = rebirthsStat.Value
+
+task.spawn(function()
+    while true do
+        local elapsedTime = tick() - startTime
+        local days = math.floor(elapsedTime / (24 * 3600))
+        local hours = math.floor((elapsedTime % (24 * 3600)) / 3600)
+        local minutes = math.floor((elapsedTime % 3600) / 60)
+        local seconds = math.floor(elapsedTime % 60)
+
+        stopwatchLabel.Text = string.format("%dd %dh %dm %ds", days, hours,
+                                            minutes, seconds)
+
+        local currentStrength = strengthStat.Value
+        local currentRebirths = rebirthsStat.Value
+        local currentDurability = durabilityStat.Value
+
+        local formattedStrength = formatNumber(currentStrength)
+        local formattedRebirths = formatNumber(currentRebirths)
+        local formattedDurability = formatNumber(currentDurability)
+
+        strengthLabel.Text = "Strength: " .. formattedStrength
+        durabilityLabel.Text = "Durability: " .. formattedDurability
+        rebirthsLabel.Text = "Rebirths: " .. formattedRebirths
+
+        -- Berechne die Gained-Werte basierend auf den initialen Werten
+        local sessionStrengthDelta = currentStrength - initialStrength
+        local sessionDurabilityDelta = currentDurability - initialDurability
+        local sessionRebirthsDelta = currentRebirths - initialRebirths
+
+        sessionStrengthLabel.Text = "Gained Strength: " ..
+                                        formatNumber(sessionStrengthDelta)
+        sessionDurabilityLabel.Text = "Gained Durability: " ..
+                                          formatNumber(sessionDurabilityDelta)
+        sessionRebirthsLabel.Text = "Gained Rebirths: " ..
+                                        formatNumber(sessionRebirthsDelta)
+
+        task.wait(0.001)
+    end
+end)
+
+local features = window:AddTab("ข้อมูล")
+features:Show()
+features:AddLabel("Made By C4").TextSize = 20
+features:AddLabel("เสี่ยบ่าวสั่งลุย | PRIVATE SCRIPT").TextSize = 45
