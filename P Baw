@@ -460,112 +460,129 @@ features:AddButton("Frost Gym", function()
     hrp.CFrame = CFrame.new(-2623, 7.36, -409)
 end)
 
-local features = window:AddTab("ค่าพลัง")
-features:Show()
+local features = window:AddTab("ค่าพลังต่างๆ")
+
 
 local player = game.Players.LocalPlayer
 local leaderstats = player:WaitForChild("leaderstats")
 local strengthStat = leaderstats:WaitForChild("Strength")
-local rebirthsStat = leaderstats:WaitForChild("Rebirths")
 local durabilityStat = player:WaitForChild("Durability")
 
 local function formatNumber(number)
-    local numStr = tostring(number)
-    local formattedStr = numStr:reverse():gsub("(%d%d%d)", "%1,"):reverse()
-    if formattedStr:sub(1, 1) == "," then formattedStr = formattedStr:sub(2) end
-    return formattedStr
+local isNegative = number < 0
+number = math.abs(number)
+if number >= 1e15 then
+    return (isNegative and "-" or "") .. string.format("%.2fQa", number / 1e15)
+elseif number >= 1e12 then
+    return (isNegative and "-" or "") .. string.format("%.2fT", number / 1e12)
+elseif number >= 1e9 then
+    return (isNegative and "-" or "") .. string.format("%.2fB", number / 1e9)
+elseif number >= 1e6 then
+    return (isNegative and "-" or "") .. string.format("%.2fM", number / 1e6)
+elseif number >= 1e3 then
+    return (isNegative and "-" or "") .. string.format("%.2fK", number / 1e3)
+else
+    return (isNegative and "-" or "") .. string.format("%.2f", number)
+end
 end
 
-local timeLabel = features:AddLabel("⏱️Time:")
-timeLabel.TextSize = 24
-timeLabel.Font = Enum.Font.PatrickHand
-
-local stopwatchLabel = features:AddLabel("0d 0h 0m 0s")
+local stopwatchLabel = features:AddLabel("Fast Rep Time: 0d 0h 0m 0s")
 stopwatchLabel.TextSize = 20
-stopwatchLabel.Font = Enum.Font.PatrickHand
+
+local projectedStrengthLabel = features:AddLabel("Strength Rate: 0 /Hour | 0 /Day | 0 /Week | 0 /Month")
+projectedStrengthLabel.TextSize = 20
+
+local projectedDurabilityLabel = features:AddLabel("Durability Rate: 0 /Hour | 0 /Day | 0 /Week | 0 /Month")
+projectedDurabilityLabel.TextSize = 20
 
 features:AddLabel("").TextSize = 10
 
-local statsLabel = features:AddLabel("📊Stats:")
+local statsLabel = features:AddLabel("Stats:")
 statsLabel.TextSize = 24
-statsLabel.Font = Enum.Font.PatrickHand
 
-local strengthLabel = features:AddLabel("Strength: 0")
-local durabilityLabel = features:AddLabel("Durability: 0")
-local rebirthsLabel = features:AddLabel("Rebirths: 0")
-
+local strengthLabel = features:AddLabel("Strength: 0 | Gained: 0")
 strengthLabel.TextSize = 20
-strengthLabel.Font = Enum.Font.PatrickHand
+
+local durabilityLabel = features:AddLabel("Durability: 0 | Gained: 0")
 durabilityLabel.TextSize = 20
-durabilityLabel.Font = Enum.Font.PatrickHand
-rebirthsLabel.TextSize = 20
-rebirthsLabel.Font = Enum.Font.PatrickHand
-
-local sessionStrength = strengthStat.Value
-local sessionDurability = durabilityStat.Value
-local sessionRebirths = rebirthsStat.Value
-
-features:AddLabel("").TextSize = 10
-
-local sessionLabel = features:AddLabel("🕹️Session:")
-sessionLabel.TextSize = 24
-sessionLabel.Font = Enum.Font.PatrickHand
-
-local sessionStrengthLabel = features:AddLabel("Gained Strength: 0")
-local sessionDurabilityLabel = features:AddLabel("Gained Durability: 0")
-local sessionRebirthsLabel = features:AddLabel("Gained Rebirths: 0")
-
-sessionStrengthLabel.TextSize = 20
-sessionStrengthLabel.Font = Enum.Font.PatrickHand
-sessionDurabilityLabel.TextSize = 20
-sessionDurabilityLabel.Font = Enum.Font.PatrickHand
-sessionRebirthsLabel.TextSize = 20
-sessionRebirthsLabel.Font = Enum.Font.PatrickHand
 
 local startTime = tick()
-
--- Wir setzen die Session-Stats beim ersten Laden und ändern sie nie mehr.
 local initialStrength = strengthStat.Value
 local initialDurability = durabilityStat.Value
-local initialRebirths = rebirthsStat.Value
+local trackingStarted = false
+
+local strengthHistory = {}
+local durabilityHistory = {}
+local calculationInterval = 10
 
 task.spawn(function()
-    while true do
-        local elapsedTime = tick() - startTime
+local lastCalcTime = tick()
+while true do
+    local currentTime = tick()
+    local currentStrength = strengthStat.Value
+    local currentDurability = durabilityStat.Value
+
+    if not trackingStarted and (currentStrength - initialStrength) >= 100e9 then
+        trackingStarted = true
+        startTime = tick()
+        strengthHistory = {}
+        durabilityHistory = {}
+    end
+
+    if trackingStarted then
+        local elapsedTime = currentTime - startTime
         local days = math.floor(elapsedTime / (24 * 3600))
         local hours = math.floor((elapsedTime % (24 * 3600)) / 3600)
         local minutes = math.floor((elapsedTime % 3600) / 60)
         local seconds = math.floor(elapsedTime % 60)
 
-        stopwatchLabel.Text = string.format("%dd %dh %dm %ds", days, hours,
-                                            minutes, seconds)
+        stopwatchLabel.Text = string.format("Fast Rep Time: %dd %dh %dm %ds", days, hours, minutes, seconds)
 
-        local currentStrength = strengthStat.Value
-        local currentRebirths = rebirthsStat.Value
-        local currentDurability = durabilityStat.Value
-
-        local formattedStrength = formatNumber(currentStrength)
-        local formattedRebirths = formatNumber(currentRebirths)
-        local formattedDurability = formatNumber(currentDurability)
-
-        strengthLabel.Text = "Strength: " .. formattedStrength
-        durabilityLabel.Text = "Durability: " .. formattedDurability
-        rebirthsLabel.Text = "Rebirths: " .. formattedRebirths
-
-        -- Berechne die Gained-Werte basierend auf den initialen Werten
         local sessionStrengthDelta = currentStrength - initialStrength
         local sessionDurabilityDelta = currentDurability - initialDurability
-        local sessionRebirthsDelta = currentRebirths - initialRebirths
 
-        sessionStrengthLabel.Text = "Gained Strength: " ..
-                                        formatNumber(sessionStrengthDelta)
-        sessionDurabilityLabel.Text = "Gained Durability: " ..
-                                          formatNumber(sessionDurabilityDelta)
-        sessionRebirthsLabel.Text = "Gained Rebirths: " ..
-                                        formatNumber(sessionRebirthsDelta)
+        strengthLabel.Text = "Strength: " .. formatNumber(currentStrength) .. " | Gained: " .. formatNumber(sessionStrengthDelta)
+        durabilityLabel.Text = "Durability: " .. formatNumber(currentDurability) .. " | Gained: " .. formatNumber(sessionDurabilityDelta)
 
-        task.wait(0.001)
+        table.insert(strengthHistory, {time = currentTime, value = currentStrength})
+        table.insert(durabilityHistory, {time = currentTime, value = currentDurability})
+
+        while #strengthHistory > 0 and currentTime - strengthHistory[1].time > calculationInterval do
+            table.remove(strengthHistory, 1)
+        end
+        while #durabilityHistory > 0 and currentTime - durabilityHistory[1].time > calculationInterval do
+            table.remove(durabilityHistory, 1)
+        end
+
+        if currentTime - lastCalcTime >= calculationInterval then
+            lastCalcTime = currentTime
+
+            if #strengthHistory >= 2 then
+                local strengthDelta = strengthHistory[#strengthHistory].value - strengthHistory[1].value
+                local strengthPerSecond = strengthDelta / calculationInterval
+                local strengthPerHour = math.floor(strengthPerSecond * 3600)
+                local strengthPerDay = math.floor(strengthPerSecond * 86400)
+                local strengthPerWeek = math.floor(strengthPerSecond * 604800)
+                local strengthPerMonth = math.floor(strengthPerSecond * 2592000)
+
+                projectedStrengthLabel.Text = "Strength Rate: " .. formatNumber(strengthPerHour) .. "/Hour | " .. formatNumber(strengthPerDay) .. "/Day | " .. formatNumber(strengthPerWeek) .. "/Week | " .. formatNumber(strengthPerMonth) .. "/Month"
+            end
+
+            if #durabilityHistory >= 2 then
+                local durabilityDelta = durabilityHistory[#durabilityHistory].value - durabilityHistory[1].value
+                local durabilityPerSecond = durabilityDelta / calculationInterval
+                local durabilityPerHour = math.floor(durabilityPerSecond * 3600)
+                local durabilityPerDay = math.floor(durabilityPerSecond * 86400)
+                local durabilityPerWeek = math.floor(durabilityPerSecond * 604800)
+                local durabilityPerMonth = math.floor(durabilityPerSecond * 2592000)
+
+                projectedDurabilityLabel.Text = "Durability Rate: " .. formatNumber(durabilityPerHour) .. "/Hour | " .. formatNumber(durabilityPerDay) .. "/Day | " .. formatNumber(durabilityPerWeek) .. "/Week | " .. formatNumber(durabilityPerMonth) .. "/Month"
+            end
+        end
     end
+
+    task.wait(0.05)
+end
 end)
 
 local features = window:AddTab("ข้อมูล")
