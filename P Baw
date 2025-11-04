@@ -550,7 +550,7 @@ task.spawn(function()
         lastDurabilityValue = durabilityStat.Value
         lastRebirthsValue = rebirthsStat.Value
 
-        task.wait(1)
+        task.wait(6.5)
     end
 end)
 features:AddLabel("").TextSize = 10
@@ -640,4 +640,5 @@ end)
 local features = window:AddTab("ข้อมูล")
 features:Show()
 features:AddLabel("Made By C4").TextSize = 20
+features:AddLabel("")
 features:AddLabel("เสี่ยบ่าวสั่งลุย | PRIVATE SCRIPT").TextSize = 45
