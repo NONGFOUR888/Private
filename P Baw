@@ -7,7 +7,7 @@ local display = Player.DisplayName
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/C4EGOIST/Private/refs/heads/main/NongFour", true))()
 
-local window = library:AddWindow("เสี่ยบ่าวสั่งลุย |ส่วนตัว - หวัดดีคร้าบ "..display, {
+local window = library:AddWindow("เสี่ยบ่าวสั่งลุย | ส่วนตัว - หวัดดีคร้าบ "..display, {
 main_color = Color3.fromRGB(255, 153, 255),
 min_size = Vector2.new(650, 700),
 can_resize = false,
