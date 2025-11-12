@@ -7,7 +7,7 @@ local display = Player.DisplayName
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/C4EGOIST/Private/refs/heads/main/NongFour", true))()
 
-local window = library:AddWindow("เสี่ยบ่าวสั่งลุย | ส่วนตัว - หวัดดีคร้าบ "..display, {
+local window = library:AddWindow("เสี่ยบ่าวสั่งลุย |ส่วนตัว - หวัดดีคร้าบ "..display, {
 main_color = Color3.fromRGB(255, 153, 255),
 min_size = Vector2.new(650, 700),
 can_resize = false,
@@ -114,6 +114,34 @@ features:AddButton("ใส่ตัวหน้ากากชนเผ่า", 
     unequipPets()
     equipPetsByName("Tribal Overlord")
 end)
+local isPositionLocked = false
+local originalPosition = nil
+
+local function lockPosition()
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local hrp = character.HumanoidRootPart
+        originalPosition = hrp.CFrame
+        hrp.Anchored = true
+    end
+end
+
+local function unlockPosition()
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local hrp = character.HumanoidRootPart
+        hrp.Anchored = false
+    end
+end
+
+features:AddSwitch("ล็อคตำแหน่ง", function(bool)
+    isPositionLocked = bool
+    if isPositionLocked then
+        lockPosition()
+    else
+        unlockPosition()
+    end
+end)
 
 local features = window:AddTab("ฟามไว")
 features:Show()
@@ -159,7 +187,32 @@ features:AddSwitch("เริ่มการฟามไว", function(state)
 end)
 
 features:AddLabel("เพิ่มเติม").TextSize = 22
+local function activateProteinEggAsync()
+    task.spawn(function()
+        local tool = player.Character:FindFirstChild("Protein Egg") or
+                         player.Backpack:FindFirstChild("Protein Egg")
+        if tool then muscleEvent:FireServer("proteinEgg", tool) end
+    end)
+end
 
+local running = false
+
+task.spawn(function()
+    while true do
+        if running then
+            activateProteinEggAsync()
+            task.wait(1800)
+        else
+            task.wait(1)
+        end
+    end
+end)
+
+local switch = features:AddSwitch("กินไข่ทุกๆ30นาที", function(state)
+    running = state
+    if state then activateProteinEggAsync() end
+end)
+switch:Set(false)
 local function activateProteinEgg()
     local tool = player.Character:FindFirstChild("Protein Egg") or
                      player.Backpack:FindFirstChild("Protein Egg")
@@ -178,12 +231,6 @@ task.spawn(function()
         end
     end
 end)
-
-local switch = features:AddSwitch("กินไข่ทุกๆ30นาที", function(state)
-    running = state
-    if state then activateProteinEgg() end
-end)
-switch:Set(false)
 
 features:AddButton("จอดำ", function()
     local player = game.Players.LocalPlayer
@@ -547,7 +594,7 @@ task.spawn(function()
         lastDurabilityUpdateTime = currentTime
         lastRebirthsUpdateTime = currentTime
         lastStrengthValue = strengthStat.Value
-        lastDurabilityValue = durabilityStat.Value
+        lastDurabilityValue = durabilityStat.Value 
         lastRebirthsValue = rebirthsStat.Value
 
         task.wait(6.5)
@@ -559,10 +606,13 @@ local statsLabel = features:AddLabel("📊Stats:")
 statsLabel.TextSize = 24
 statsLabel.Font = Enum.Font.PatrickHand
 
-local strengthLabel = features:AddLabel("Strength: 0")
-local durabilityLabel = features:AddLabel("Durability: 0")
-local rebirthsLabel = features:AddLabel("Rebirths: 0")
+local strengthValue = leaderstats.Strength.Value
+local durabilityValue = durabilityStat.Value
+local rebirthsValue = leaderstats.Rebirths.Value
 
+strengthLabel = features:AddLabel("Strength: 0 ("..strengthValue..")")
+durabilityLabel = features:AddLabel("Durability: 0 (" .. durabilityValue .. ")")
+rebirthsLabel = features:AddLabel("Rebirths: 0 (" .. rebirthsValue .. ")")
 strengthLabel.TextSize = 20
 strengthLabel.Font = Enum.Font.PatrickHand
 durabilityLabel.TextSize = 20
@@ -642,3 +692,4 @@ features:Show()
 features:AddLabel("Made By C4").TextSize = 20
 features:AddLabel("")
 features:AddLabel("เสี่ยบ่าวสั่งลุย | PRIVATE SCRIPT").TextSize = 45
+
