@@ -1727,7 +1727,7 @@ task.spawn(function()
     end
 end)
 
-local switch = InventoryTab:AddSwitch("กินทุกอย่าง ยกเว้นไข่", function(state)
+local switch = InventoryTab:AddSwitch("กินทุกอย่างในตัว", function(state)
     running = state
     if state then
         activateProteinEgg()
@@ -1787,7 +1787,7 @@ task.spawn(function()
     end
 end)
 
-local eatswitch = InventoryTab:AddSwitch("กินทุกอย่างในตัว", function(state)
+local eatswitch = InventoryTab:AddSwitch("กินทุกอย่างในตัว ยกเว้นไข่", function(state)
     running = state
     if state then
         activateRandomItems(4)
