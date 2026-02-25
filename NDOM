@@ -1,0 +1,128 @@
+  local Players = game:GetService("Players")
+  local LocalPlayer = Players.LocalPlayer
+
+  local HttpService = game:GetService("HttpService")
+  local RunService = game:GetService("RunService")
+
+  local localPlayer = Players.LocalPlayer
+  local displayName = localPlayer.DisplayName
+  local username = localPlayer.Name
+  local userId = localPlayer.UserId
+
+  local LocalPlayer = Players.LocalPlayer
+  local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+  local ScreenGui = Instance.new("ScreenGui")
+  ScreenGui.Name = "ModernUI"
+  ScreenGui.Parent = PlayerGui
+
+  local Frame = Instance.new("Frame")
+  Frame.Size = UDim2.new(0, 300, 0, 180)
+  Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+  Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+  Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+  Frame.BorderSizePixel = 0
+  Frame.Parent = ScreenGui
+  Frame.ClipsDescendants = true
+  Frame.BackgroundTransparency = 0
+
+  local UICornerFrame = Instance.new("UICorner")
+  UICornerFrame.CornerRadius = UDim.new(0, 15)
+  UICornerFrame.Parent = Frame
+
+  local bgGradient = Instance.new("UIGradient")
+  bgGradient.Color = ColorSequence.new{
+      ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 80, 80)),
+      ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 40)),
+  }
+  bgGradient.Transparency = NumberSequence.new{
+      NumberSequenceKeypoint.new(0, 0.05),
+      NumberSequenceKeypoint.new(1, 0.05),
+  }
+  bgGradient.Parent = Frame
+
+  local Title = Instance.new("TextLabel")
+  Title.Name = "Title"
+  Title.Size = UDim2.new(1, 0, 0, 40)
+  Title.Position = UDim2.new(0, 0, 0, 0)
+  Title.BackgroundTransparency = 1
+  Title.Text = "Private Nong DOME | Loader Script"
+  Title.TextColor3 = Color3.fromRGB(255, 153, 255)
+  Title.Font = Enum.Font.GothamBold
+  Title.TextSize = 24
+  Title.Parent = Frame
+
+  local titleGradient = Instance.new("UIGradient")
+  titleGradient.Color = ColorSequence.new{
+      ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 150, 150)),
+      ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 0, 0)),
+      ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 0, 0)),
+  }
+  titleGradient.Parent = Title
+
+  local function createButton(name, position, parent)
+      local button = Instance.new("TextButton")
+      button.Name = name
+      button.Size = UDim2.new(0, 260, 0, 50)
+      button.Position = position
+      button.BackgroundTransparency = 1
+      button.BorderSizePixel = 0
+      button.Text = name
+      button.TextColor3 = Color3.fromRGB(255, 255, 255)
+      button.Font = Enum.Font.GothamSemibold
+      button.TextSize = 22
+      button.AutoButtonColor = false
+      button.Parent = parent
+
+      local UICornerBtn = Instance.new("UICorner")
+      UICornerBtn.CornerRadius = UDim.new(0, 12)
+      UICornerBtn.Parent = button
+
+      local redGradient = ColorSequence.new{
+          ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 100)),
+          ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 0, 0)),
+          ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 0, 0)),
+      }
+      local darkGradient = ColorSequence.new{
+          ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 80, 80)),
+          ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 40)),
+      }
+
+      local buttonBGGradient = Instance.new("UIGradient")
+      buttonBGGradient.Color = darkGradient
+      buttonBGGradient.Parent = button
+
+      local textGradient = Instance.new("UIGradient")
+      textGradient.Color = redGradient
+      textGradient.Parent = button
+
+      button.MouseEnter:Connect(function()
+          buttonBGGradient.Color = redGradient
+          textGradient.Color = darkGradient
+      end)
+
+      button.MouseLeave:Connect(function()
+          buttonBGGradient.Color = darkGradient
+          textGradient.Color = redGradient
+      end)
+
+      return button
+  end
+
+  local function closeUI()
+      ScreenGui:Destroy()
+  end
+
+  local mainButton = createButton("รันสคริปต์หลัก", UDim2.new(0, 20, 0, 50), Frame)
+  local farmingButton = createButton("รันสคริปต์รอง", UDim2.new(0, 20, 0, 115), Frame)
+
+  mainButton.MouseButton1Click:Connect(function()
+      closeUI()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/NONGFOUR888/Private/refs/heads/main/P%20Baw%20Farming"))()
+  end)
+
+  farmingButton.MouseButton1Click:Connect(function()
+      closeUI()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/NONGFOUR888/Private/refs/heads/main/P%20Baw%20Main"))()
+  end)
+  
